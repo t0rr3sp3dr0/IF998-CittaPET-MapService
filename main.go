@@ -2,8 +2,15 @@ package main
 
 import (
 	"log"
+	"net"
 
 	"cin.ufpe.br/~if998/cittapet/mapservice/proto"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
+)
+
+const (
+	addr = ":50051"
 )
 
 func main() {
@@ -18,4 +25,17 @@ func main() {
 		},
 	}
 	log.Println(event)
+
+	lis, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	s := grpc.NewServer()
+	proto.RegisterMapServer(s, &mapServer{})
+
+	// Register reflection service on gRPC server.
+	reflection.Register(s)
+
+	log.Fatal(s.Serve(lis))
 }
