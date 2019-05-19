@@ -11,8 +11,10 @@ import (
 )
 
 type consumer struct {
-	server   *mapServer
-	messages <-chan amqp.Delivery
+	server     *mapServer
+	connection amqp.Connection
+	channel    amqp.Channel
+	messages   <-chan amqp.Delivery
 }
 
 func failOnError(err error, msg string) {
@@ -31,16 +33,14 @@ func NewConsumer(server *mapServer) (*consumer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to RabbitMQ: %v", err)
 	}
-	defer queueConn.Close()
 
 	ch, err := queueConn.Channel()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to open a channel: %v", err)
 	}
-	defer ch.Close()
 
 	q, err := ch.QueueDeclare(
-		"stream", // name
+		"events", // name
 		true,     // durable
 		false,    // delete when unused
 		false,    // exclusive
@@ -80,6 +80,7 @@ func NewConsumer(server *mapServer) (*consumer, error) {
 
 func (c *consumer) Consume() error {
 	for d := range c.messages {
+
 		event := &citta.BusEvent{}
 		if err := proto.Unmarshal(d.Body, event); err != nil {
 			d.Ack(false)
@@ -92,14 +93,28 @@ func (c *consumer) Consume() error {
 			return fmt.Errorf("Failed to convert UTM to LatLng: %v", err)
 		}
 
-		c.server.Buses.Store(event.Unit, &citta.GetBusesLocationResponse_BusLocation{
-			Unit:       event.Unit,
-			Timestamp:  event.Timestamp,
-			Coordinate: coordinate,
-		})
+		if coordinate != nil {
+			c.server.Buses.Store(event.Unit, &citta.GetBusesLocationResponse_BusLocation{
+				Unit:       event.Unit,
+				Timestamp:  event.Timestamp,
+				Coordinate: coordinate,
+			})
+		}
 
 		d.Ack(false)
 		log.Printf(" [x] Consumed bus-event %v", event)
+	}
+
+	return nil
+}
+
+func (c *consumer) Close() error {
+	if err := c.channel.Close(); err != nil {
+		return err
+	}
+
+	if err := c.connection.Close(); err != nil {
+		return err
 	}
 
 	return nil

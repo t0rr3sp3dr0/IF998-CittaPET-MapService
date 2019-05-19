@@ -29,11 +29,14 @@ func main() {
 
 	server := &mapServer{}
 
-	consumer, err := NewConsumer(server)
+	c, err := NewConsumer(server)
 	if err != nil {
 		log.Fatalf("Failed to create consumer: %v", err)
 	}
-	go consumer.Consume()
+	defer c.Close()
+	go func(c *consumer) {
+		log.Fatal(c.Consume())
+	}(c)
 
 	s := grpc.NewServer()
 	proto.RegisterMapServer(s, server)

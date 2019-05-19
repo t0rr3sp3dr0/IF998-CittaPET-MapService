@@ -17,6 +17,10 @@ func UTM2LatLng(utm *proto.UTM) (*proto.LatLng, error) {
 		return nil, errors.New("utm == nil")
 	}
 
+	if utm.Easting == 0 || utm.Northing == 0 {
+		return nil, nil
+	}
+
 	lat, lng, err := UTM.ToLatLon(utm.Easting, utm.Northing, zoneNumber, zoneLetter)
 	if err != nil {
 		return nil, err
