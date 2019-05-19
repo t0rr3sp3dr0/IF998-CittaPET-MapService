@@ -9,7 +9,7 @@ import (
 
 const (
 	zoneNumber = 25
-	zoneLetter = "S"
+	zoneLetter = "L"
 )
 
 func UTM2LatLng(utm *proto.UTM) (*proto.LatLng, error) {
