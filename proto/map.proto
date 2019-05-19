@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package proto;
+
+service Bucket {
+    rpc GetBusesLocation (GetBusesLocationRequest) returns (GetBusesLocationResponse) {}
+}
+
+message GetBusesLocationRequest {
+}
+
+message GetBusesLocationResponse {
+    message BusLocation {
+        string unit = 1;
+        string timestamp = 2;
+        LatLng coordinate = 3;
+    }
+    repeated BusLocation buses_location = 1;
+}
+
+// An object representing a latitude/longitude pair. This is expressed as a pair
+// of doubles representing degrees latitude and degrees longitude. Unless
+// specified otherwise, this must conform to the
+// <a href="http://www.unoosa.org/pdf/icg/2012/template/WGS_84.pdf">WGS84
+// standard</a>. Values must be within normalized ranges.
+message LatLng {
+    // The latitude in degrees. It must be in the range [-90.0, +90.0].
+    double latitude = 1;
+
+    // The longitude in degrees. It must be in the range [-180.0, +180.0].
+    double longitude = 2;
+}
