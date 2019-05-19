@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package proto;
 
-service Bucket {
+service Map {
     rpc GetBusesLocation (GetBusesLocationRequest) returns (GetBusesLocationResponse) {}
 }
 
