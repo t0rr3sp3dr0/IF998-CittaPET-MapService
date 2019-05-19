@@ -2,26 +2,28 @@ package main
 
 import (
 	"context"
+	"sync"
 
 	"cin.ufpe.br/~if998/cittapet/mapservice/proto"
 )
 
 // server implements MapServer.
-type mapServer struct{}
+type mapServer struct {
+	Buses sync.Map
+}
 
-// GetBusesLocation is implementing StorageServer.
+// GetBusesLocation is implementing MapServer.
 func (s *mapServer) GetBusesLocation(ctx context.Context, req *proto.GetBusesLocationRequest) (*proto.GetBusesLocationResponse, error) {
-	GetBusesLocationResponse := &proto.GetBusesLocationResponse{
-		BusesLocation: []*proto.GetBusesLocationResponse_BusLocation{
-			&proto.GetBusesLocationResponse_BusLocation{
-				Unit:      "108",
-				Timestamp: "2000-01-01T12:00:00+00:00",
-				Coordinate: &proto.LatLng{
-					Latitude:  -7.998191,
-					Longitude: -34.87021038376772,
-				},
-			},
-		},
+	response := &proto.GetBusesLocationResponse{
+		BusesLocation: []*proto.GetBusesLocationResponse_BusLocation{},
 	}
-	return GetBusesLocationResponse, nil
+
+	s.Buses.Range(func(keu interface{}, val interface{}) bool {
+		v := val.(*proto.GetBusesLocationResponse_BusLocation)
+		response.BusesLocation = append(response.BusesLocation, v)
+
+		return true
+	})
+
+	return response, nil
 }

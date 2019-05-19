@@ -9,10 +9,6 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-const (
-	addr = ":50051"
-)
-
 func main() {
 	log.Println("Hello World!")
 
@@ -24,15 +20,23 @@ func main() {
 			Northing: 9115080,
 		},
 	}
-	log.Println(event)
+	log.Println(UTM2LatLng(event.Coordinate))
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatalf("Failed to listen: %v", err)
 	}
 
+	server := &mapServer{}
+
+	consumer, err := NewConsumer(server)
+	if err != nil {
+		log.Fatalf("Failed to create consumer: %v", err)
+	}
+	go consumer.Consume()
+
 	s := grpc.NewServer()
-	proto.RegisterMapServer(s, &mapServer{})
+	proto.RegisterMapServer(s, server)
 
 	// Register reflection service on gRPC server.
 	reflection.Register(s)
